@@ -43,6 +43,7 @@ import UpdateAdminProfile from './components/Admin/UpdateAdminProfile';
 import CreateProject from './components/Instructor/Projects/CreateProject';
 import CreateTask from './pages/Instructor/projectsManagment/CreateTask';
 import EditProject from './components/Instructor/Projects/EditProject';
+import CvStudentsRequests from './pages/Instructor/projectsManagment/CvStudentsRequests';
 
 function App() {
   return (
@@ -64,7 +65,7 @@ function App() {
             <PrivateRoute>
               <Dashboard />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -73,7 +74,7 @@ function App() {
             <PrivateRoute>
               <EnrolledProjects />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -81,7 +82,7 @@ function App() {
           element={
             <PrivateRoute>
               <ViewProject />
-            </PrivateRoute>            
+            </PrivateRoute>
           }
         />
 
@@ -93,7 +94,7 @@ function App() {
 
               <AllCourses />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -103,7 +104,7 @@ function App() {
 
               <EnrolledCourses />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -113,7 +114,7 @@ function App() {
 
               <CourseDetails />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -121,9 +122,9 @@ function App() {
           element={
             <PrivateRoute>
 
-              <SubCourseDetails/>
+              <SubCourseDetails />
             </PrivateRoute>
-            
+
           }
         />
         {/* insryuctor routes */}
@@ -134,7 +135,7 @@ function App() {
 
               <InstructorProjects />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -144,9 +145,9 @@ function App() {
 
               <InstructorCourses />
             </PrivateRoute>
-            
+
           }
-        />        
+        />
         <Route
           path="/instructor/create/course"
           element={
@@ -154,7 +155,7 @@ function App() {
 
               <CreateCourse />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -163,9 +164,9 @@ function App() {
             <PrivateRoute>
               <EditCourse />
             </PrivateRoute>
-            
+
           }
-        /> 
+        />
         <Route
           path="/admin/instructors"
           element={
@@ -173,7 +174,7 @@ function App() {
 
               <Instructors />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -183,7 +184,7 @@ function App() {
 
               <Students />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -193,7 +194,7 @@ function App() {
 
               <Admins />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -203,7 +204,7 @@ function App() {
 
               <Projects />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -213,7 +214,7 @@ function App() {
 
               <Courses />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -223,7 +224,7 @@ function App() {
 
               <Reports />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -232,7 +233,7 @@ function App() {
             <PrivateRoute>
               <PrivateMessages />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -242,7 +243,7 @@ function App() {
 
               <Categories />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -252,17 +253,17 @@ function App() {
 
               <Profile />
             </PrivateRoute>
-            
+
           }
         />
         <Route
           path="/instructor/ProjectManagement"
           element={
             <PrivateRoute>
-              
+
               <ProjectManagement />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -272,7 +273,7 @@ function App() {
 
               <TasksWorkSpace />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -282,7 +283,7 @@ function App() {
 
               <AvailableProjects />
             </PrivateRoute>
-            
+
           }
         />
         <Route
@@ -338,6 +339,14 @@ function App() {
           element={
             <PrivateRoute>
               <EditProject />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/instructor/project/requests/cv/:id"
+          element={
+            <PrivateRoute>
+              <CvStudentsRequests />
             </PrivateRoute>
           }
         />

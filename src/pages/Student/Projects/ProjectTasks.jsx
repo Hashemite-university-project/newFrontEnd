@@ -13,12 +13,13 @@ function ProjectTasks() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(1);
-    const [selectedTask, setSelectedTask] = useState(null); // State for selected task
-    const [isPopupOpen, setIsPopupOpen] = useState(false); // State for popup visibility
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
     const itemsPerPage = 6;
     const [taskDelivery, setTaskDelivery] = useState('');
-    const [taskID, setTaskID] = useState(1);
+    const [refresh, setRefresh] = useState(0);
     const [userID, setuserID] = useState('');
+    const [animate, setAnimate] = useState(false);
 
 
     const [isChatOpen, setIsChatOpen] = useState(false);
@@ -42,23 +43,29 @@ function ProjectTasks() {
                 setError(err.message || 'Failed to fetch Tasks');
             } finally {
                 setLoading(false);
+                setAnimate(true);
             }
         };
         fetchProjects();
-    }, [id, currentPage, searchQuery]);
+    }, [id, currentPage, searchQuery, refresh]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, taskID) => {
         e.preventDefault();
         if (taskDelivery.trim() === '') {
           alert('Please enter task delivery details.');
           return;
         }
         try {
-          const response = await axios.post(`http://localhost:8000/task/student/taskDelivery/${taskID}`, {
-            task_link:taskDelivery,
-          },{withCredentials: true,});
+          const response = await axios.post(
+            `http://localhost:8000/task/student/taskDelivery/${taskID}`,
+            {
+              task_link: taskDelivery,
+            },
+            { withCredentials: true }
+          );
           if (response.status === 201) {
             alert('Task delivery details sent successfully!');
+            setRefresh(taskID);
           } else {
             alert('Failed to send task delivery details. Please try again.');
           }
@@ -69,17 +76,14 @@ function ProjectTasks() {
       };
 
     const handleViewDetails = (task) => {
-        setSelectedTask(task); // Set selected task
-        setIsPopupOpen(true); // Open the popup
+        setSelectedTask(task);
+        setIsPopupOpen(true);
     };
-
     const closePopup = () => {
-        setIsPopupOpen(false); // Close the popup
-        setSelectedTask(null); // Clear selected task
+        setIsPopupOpen(false); 
+        setSelectedTask(null); 
     };
 
-
-  // Handle input change
   const handleInputChange = (e) => {
     setTaskDelivery(e.target.value);
   };
@@ -92,11 +96,9 @@ function ProjectTasks() {
         return <div>Error: {error}</div>;
     }
 
-    
-
     return (
         <DashboardLayout>
-            <main className="p-4 md:ml-64 h-screen pt-2 dark:bg-gray-900 transition-colors duration-300 overflow-auto">
+            <main className=" p-4 md:ml-64 pt-2 dark:bg-gray-900 transition-colors duration-300 overflow-auto">
             <div class="-my-2 py-0 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 pr-10 lg:px-4">
                 <div class="align-middle rounded-tl-lg rounded-tr-lg inline-block w-full py-4 overflow-hidden bg-white shadow-lg px-12">
                     <div class="flex justify-between ">
@@ -119,6 +121,7 @@ function ProjectTasks() {
                                 />
                             </div>
                         </div>
+                        <h2>sdsdsdsd</h2>
                     </div>
                 </div>
                 <div class="align-middle inline-block min-w-full shadow overflow-hidden bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg pb-4">
@@ -136,7 +139,7 @@ function ProjectTasks() {
                     </thead>
                     <tbody className="bg-white">
                                 {tasks.map((task) => (
-                                    <tr key={task.task_id}>
+                                    <tr key={task.task_id} className='bg-white hover:bg-gray-100 border-b transform hover:scale-105 transition duration-200'>
                                         <td className="px-6 py-4 whitespace-no-wrap border-b border-gray-500">
                                             <div className="flex items-center">
                                                 <div>
@@ -148,19 +151,40 @@ function ProjectTasks() {
                                             <div className="text-sm leading-5 text-blue-900">{task.title}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5">
-                                            <Link to={`/task.task_delivery`}>View</Link>
+                                            <Link to={`${task.task_delivery}`}>View</Link>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5">
+                                        <td
+                                            className={`px-6 py-4 whitespace-no-wrap border-b border-gray-500 text-sm leading-5 ${
+                                                new Date(task.due_date) < new Date() ? 'text-red-600 font-bold' : 'text-blue-900'
+                                            }`}
+                                            >
                                             {new Date(task.due_date).toLocaleString('en-GB', {
                                                 year: 'numeric',
                                                 month: '2-digit',
-                                                day: '2-digit'
+                                                day: '2-digit',
                                             })}
-                                        </td>
+                                            </td>
                                         <td className="px-6 py-4 whitespace-no-wrap border-b text-blue-900 border-gray-500 text-sm leading-5">
-                                            <span className={`relative inline-block px-3 py-1 font-semibold ${task.status === 'completed' ? 'text-green-900' : task.due_date && new Date(task.due_date) > new Date() ? 'text-red-900' : 'text-orange-900'} leading-tight`}>
-                                                <span aria-hidden className={`absolute inset-0 ${task.status === 'completed' ? 'bg-green-200' : task.status === 'in-progress' ? 'bg-red-200' : 'bg-orange-200'} opacity-50 rounded-full`}></span>
-                                                <span className="relative text-xs">{task.status}</span>
+                                        <span
+                                            className={`relative inline-block px-3 py-1 font-semibold ${
+                                                task.status === 'completed'
+                                                ? 'text-green-900'
+                                                : task.status === 'pending_approval'
+                                                ? 'text-blue-900'
+                                                : 'text-yellow-900'
+                                            } leading-tight`}
+                                            >
+                                            <span
+                                                aria-hidden
+                                                className={`absolute inset-0 ${
+                                                task.status === 'completed'
+                                                    ? 'bg-green-200'
+                                                    : task.status === 'pending_approval'
+                                                    ? 'bg-blue-200'
+                                                    : 'bg-yellow-200'
+                                                } opacity-50 rounded-full`}
+                                            ></span>
+                                            <span className="relative text-xs">{task.status}</span>
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-no-wrap border-b border-gray-500 text-blue-900 text-sm leading-5">
@@ -256,29 +280,44 @@ function ProjectTasks() {
                         <p><strong>Status:</strong> {selectedTask.status}</p>
                         <p><button className='mt-3 px-2 py-0 bg-slate-400 text-white rounded hover:bg-slate-600'><Link target="_blank" to={selectedTask.task_img} className='font-light'>Additional file</Link></button></p>
                         <div>
-                            <p><strong>Task Delivery:</strong> <Link href={selectedTask.task_delivery} target="_blank" rel="noopener noreferrer">previous link</Link></p>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
+                            <p>
+                                <strong>Task Delivery:</strong>{' '}
+                                <Link
+                                href={selectedTask.task_delivery}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                >
+                                previous link
+                                </Link>
+                            </p>
+                            <form
+                                onSubmit={(e) => handleSubmit(e, selectedTask.task_id)}
+                                className="space-y-4"
+                            >
+                                <div>
                                 <input
-                                id="taskDelivery"
-                                type="text"
-                                value={taskDelivery}
-                                onChange={handleInputChange}
-                                className="mt-2 p-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                placeholder="Enter task delivery details"
+                                    id="taskDelivery"
+                                    type="text"
+                                    value={taskDelivery}
+                                    onChange={handleInputChange}
+                                    className="mt-2 p-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    placeholder="Enter task delivery details"
                                 />
                                 <button
-                                type="submit"
-                                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    type="submit"
+                                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                                 >
-                                Submit Task Delivery
+                                    Submit Task Delivery
                                 </button>
-                            </div>
+                                </div>
                             </form>
-                        </div>
-                        <button onClick={closePopup} className="mt-3 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                            </div>
+                            <button
+                            onClick={closePopup}
+                            className="mt-3 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                            >
                             Close
-                        </button>
+                            </button>
                     </div>
                 </div>
             )}

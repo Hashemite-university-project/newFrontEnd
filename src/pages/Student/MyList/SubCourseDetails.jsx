@@ -8,65 +8,14 @@ import DashboardLayout from '../../../components/DashboadLayouts/DashbordLayout'
 import axios from 'axios';
 
 const CourseDetails = () => {
-  const { courseId } = useParams(); // Extract courseId from URL parameters
+  const { courseId } = useParams(); 
 
   const [course, setCourse] = useState(null);
   const [content, setContent] = useState([]); // State for section videos
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [relatedCourses, setRelatedCourses] = useState([]);
-  const testData = [
-    {
-      video_id: 2,
-      video_title: "title 1",
-      video_url: null,
-      video_description: "lorem lorem lorem lorem lorem lorem lorem lorem",
-      course_id: 2,
-      is_deleted: false,
-      createdAt: "2024-11-16T19:24:56.000Z",
-      updatedAt: "2024-11-16T19:24:56.000Z"
-    },
-    {
-      video_id: 3,
-      video_title: "title 2",
-      video_url: null,
-      video_description: "lorem lorem lorem lorem lorem lorem lorem lorem",
-      course_id: 2,
-      is_deleted: false,
-      createdAt: "2024-11-16T19:24:58.000Z",
-      updatedAt: "2024-11-16T19:24:58.000Z"
-    },
-    {
-      video_id: 4,
-      video_title: "title 3",
-      video_url: null,
-      video_description: "lorem lorem lorem lorem lorem lorem lorem lorem",
-      course_id: 2,
-      is_deleted: false,
-      createdAt: "2024-11-16T19:24:58.000Z",
-      updatedAt: "2024-11-16T19:24:58.000Z"
-    },
-    {
-      video_id: 5,
-      video_title: "title 4",
-      video_url: null,
-      video_description: "lorem lorem lorem lorem lorem lorem lorem lorem",
-      course_id: 2,
-      is_deleted: false,
-      createdAt: "2024-11-16T19:24:59.000Z",
-      updatedAt: "2024-11-16T19:24:59.000Z"
-    },
-    {
-      video_id: 6,
-      video_title: "title 5",
-      video_url: null,
-      video_description: "lorem lorem lorem lorem lorem lorem lorem lorem",
-      course_id: 2,
-      is_deleted: false,
-      createdAt: "2024-11-16T19:25:00.000Z",
-      updatedAt: "2024-11-16T19:25:00.000Z"
-    }
-  ];
+
   useEffect(() => {
     const fetchData = async () => {
       try {

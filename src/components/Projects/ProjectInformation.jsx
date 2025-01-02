@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router';
 import DashboardLayout from '../DashboadLayouts/DashbordLayout';
-import { ToastContainer, toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
 const ProjectInformation = () => {
   const { projectId } = useParams();
-  const [project, setProject] = useState(null); 
+  const [project, setProject] = useState(null);
   const [projectSkills, setProjectSkills] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
 
@@ -15,7 +14,7 @@ const ProjectInformation = () => {
     const fetchProjectDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/project/projectDetails/${projectId}`, 
+          `http://localhost:8000/project/projectDetails/${projectId}`,
           { withCredentials: true }
         );
         const { projectDetails, participants } = response.data;
@@ -25,9 +24,7 @@ const ProjectInformation = () => {
 
         let parsedSkills = projectDetails.required_skills;
         if (typeof parsedSkills === 'string') {
-          parsedSkills = parsedSkills.replace(/^"(.+)"$/, '$1'); // Remove wrapping quotes
-          parsedSkills = parsedSkills.replace(/'/g, '"'); // Convert to JSON-compatible string
-          parsedSkills = JSON.parse(parsedSkills);
+          parsedSkills = JSON.parse(parsedSkills.replace(/'/g, '"'));
         }
         setProjectSkills(parsedSkills);
       } catch (error) {
@@ -38,102 +35,87 @@ const ProjectInformation = () => {
     fetchProjectDetails();
   }, [projectId]);
 
-  if (!project) {
-    return <p>Loading project details...</p>;
-  }
-  
   const handleSendRequest = async () => {
     try {
-      const response = await axios.post(`http://localhost:8000/project/projectRequest/${projectId}`,{}, { withCredentials: true });
-      console.log("API Response:", response.data);
+      const response = await axios.post(
+        `http://localhost:8000/project/projectRequest/${projectId}`,
+        {},
+        { withCredentials: true }
+      );
       Swal.fire({
         title: 'Success!',
-        text: `${response.data.message}`,
+        text: response.data.message,
         icon: 'success',
-        confirmButtonText: 'OK'
+        confirmButtonText: 'OK',
       });
     } catch (error) {
-      console.error("Error sending request:", error);
-      alert("Failed to send the request.");
+      console.error('Error sending request:', error);
+      alert('Failed to send the request.');
     }
   };
 
+  if (!project) {
+    return <p className="text-center text-gray-600 mt-8">Loading project details...</p>;
+  }
+
   return (
     <DashboardLayout>
-      <main className="md:ml-64">
-        <div className="space-y-6">
-        <div class="bg-gray-100 dark:bg-gray-800 py-2">
-            <div class="max-w-6xl px-4 sm:px-6 lg:px-4">
-                <div class="flex flex-col md:flex-row -mx-2">
-                    <div class="md:flex-1 px-4">
-                        <div class="rounded-lg bg-gray-300 dark:bg-gray-700 mb-4">
-                            <img class="w-[600px] h-[200px] object-cover" src={project.project_img} alt="ProductImage"/>
-                        </div>
-                    </div>
-                    <div class="md:flex-1 px-4">
-                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">{project.project_name}</h2>
-                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">{project.category.category_name}</p>
-                    </div>
-                </div>
+      <main className="p-4 md:ml-64 bg-gray-100 dark:bg-gray-900 min-h-screen">
+        <div className="container mx-auto space-y-12">
+          {/* Header Section */}
+          <div className="relative bg-gradient-to-r from-indigo-500 to-blue-500 shadow-lg overflow-hidden">
+            <img
+              src={project.project_img}
+              alt="Project"
+              className="w-full h-64 object-cover opacity-40"
+            />
+            <div className="absolute inset-0 flex flex-col justify-center items-center animate-fadeIn">
+              <h1 className="text-4xl font-bold text-white">{project.project_name}</h1>
+              <p className="mt-2 text-lg text-white">{project.category.category_name}</p>
             </div>
-        </div>
-          {/* Instructor Information */}
-          <section>
-            <h2 className="text-xl font-semibold dark:text-white mb-4">Instructor Information</h2>
-            <div className="bg-white dark:bg-gray-800 shadow rounded p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h3 className="font-medium text-gray-800 dark:text-gray-300">Name</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{project.instructor.user.user_name}</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800 dark:text-gray-300">Email</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{project.instructor.user.user_email}</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800 dark:text-gray-300">Major</h3>
-                  <p className="text-gray-600 dark:text-gray-400">{project.instructor.major}</p>
-                </div>
-              </div>
-            </div>
-          </section>
+          </div>
 
-          {/* Project Description and Objectives */}
-          <section>
-            <h2 className="text-xl font-semibold dark:text-white mb-4">Project Description & Objectives</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 shadow rounded p-6">
-                <h3 className="font-medium text-gray-800 dark:text-gray-300">Project Description</h3>
-                <p className="text-gray-600 dark:text-gray-400">{project.project_description}</p>
+          {/* Main Content */}
+          <div className="flex flex-wrap md:flex-nowrap space-y-6 md:space-y-0 md:space-x-6">
+            {/* Timeline Section */}
+            <section className="relative border-l-4 border-indigo-500 pl-8 space-y-8 flex-1 animate-slideInLeft">
+              <div className="relative">
+                <span className="absolute -left-6 w-8 h-8 bg-indigo-500 text-white text-center rounded-full">
+                  1
+                </span>
+                <h2 className="text-2xl font-bold text-gray-800 ml-8 dark:text-white mb-2">
+                  Project Description
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 ml-8">{project.project_description}</p>
               </div>
-              <div className="bg-white dark:bg-gray-800 shadow rounded p-6">
-                <h3 className="font-medium text-gray-800 dark:text-gray-300 mb-2">Required Skills</h3>
-                <ul className="list-disc list-inside space-y-0 text-gray-600 dark:text-gray-400">
+              <div className="relative">
+                <span className="absolute -left-6 w-8 h-8 bg-indigo-500 text-white text-center rounded-full">
+                  2
+                </span>
+                <h2 className="text-2xl ml-8 font-bold text-gray-800 dark:text-white mb-2">
+                  Required Skills
+                </h2>
+                <ul className="list-disc ml-8 list-inside text-gray-600 dark:text-gray-400">
                   {projectSkills.map((skill, index) => (
                     <li key={index}>{skill}</li>
                   ))}
                 </ul>
               </div>
-            </div>
-          </section>
-
-          {/* Project Timeline */}
-          <section>
-            <h2 className="text-xl font-semibold dark:text-white mb-4">Project Timeline</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-gray-800 shadow rounded p-6">
-                <h3 className="font-medium text-gray-800 dark:text-gray-300">Start Date</h3>
-                <p className="text-gray-600 dark:text-gray-400">
+              <div className="relative">
+                <span className="absolute -left-6 w-8 h-8 bg-indigo-500 text-white text-center rounded-full">
+                  3
+                </span>
+                <h2 className="text-2xl font-bold text-gray-800 ml-8 dark:text-white mb-2">Timeline</h2>
+                <p className="text-gray-600 ml-8 dark:text-gray-400">
+                  Start Date:{' '}
                   {new Date(project.start_date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
                   })}
                 </p>
-              </div>
-              <div className="bg-white dark:bg-gray-800 shadow rounded p-6">
-                <h3 className="font-medium text-gray-800 dark:text-gray-300">End Date</h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 ml-8 dark:text-gray-400 mt-2">
+                  End Date:{' '}
                   {new Date(project.end_date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -141,50 +123,70 @@ const ProjectInformation = () => {
                   })}
                 </p>
               </div>
-            </div>
-          </section>
+            </section>
+
+            {/* Instructor Section */}
+            <section className="flex-1 bg-white dark:bg-gray-800 shadow-lg  p-6 animate-slideInRight">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+                Instructor Information
+              </h2>
+              <div className="flex items-center space-x-4">
+                <div className="w-20 h-20 rounded-full bg-gray-300 flex-shrink-0">
+                  <img
+                    src="https://via.placeholder.com/80"
+                    alt="Instructor"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <div>
+                  <p className="text-lg font-medium text-gray-800 dark:text-gray-300">
+                    {project.instructor.user.user_name}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {project.instructor.user.user_email}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    Major: {project.instructor.major}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
 
           {/* Team Members */}
-          <section>
-            <h2 className="text-xl font-semibold dark:text-white mb-4">Team Members</h2>
-            <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-gray-200 dark:bg-gray-800 p-6  shadow-lg animate-fadeIn">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+              Team Members
+            </h2>
+            <div className="flex space-x-6 overflow-x-auto">
               {teamMembers.map((member, index) => (
-                <section class="mb-2 border bg-white p-4 rounded-lg max-w-full">
-                <div class="mx-auto">
-                    <div class="card md:flex max-w-lg">
-                        <div class="w-20 h-20 mx-auto mb-6 md:mr-6 flex-shrink-0">
-                            <img class="object-cover rounded-full" src="https://tailwindflex.com/public/images/user.png"/>
-                        </div>
-                        <div class="flex-grow text-center md:text-left">
-                            <p class="font-bold">Senior Developer</p>
-                            <h3 class="text-xl heading">John Doe</h3>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <span class="bg-gray-200 border px-2 py-1.5 rounded-lg text-xs whitespace-nowrap">
-                                    Discrete Math
-                                </span>
-                                <span class="bg-gray-200 border px-2 py-1.5 rounded-lg text-xs whitespace-nowrap">
-                                    Topology
-                                </span>
-                                <span class="bg-gray-200 border px-2 py-1.5 rounded-lg text-xs whitespace-nowrap">
-                                    Neural Nets
-                                </span>
-                                <span class="bg-gray-200 border px-2 py-1.5 rounded-lg text-xs whitespace-nowrap">
-                                    Neural Nets
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                <div
+                  key={index}
+                  className="min-w-[200px] bg-white dark:bg-gray-700 p-4  shadow-lg hover:scale-105 transition transform"
+                >
+                  <img
+                    src="https://via.placeholder.com/80"
+                    alt={member.name}
+                    className="w-16 h-16 mx-auto rounded-full"
+                  />
+                  <h3 className="text-lg font-medium text-center mt-4 text-gray-800 dark:text-white">
+                    {member.user.user_name || 'Unknown'}
+                  </h3>
+                  <p className="text-center text-gray-600 dark:text-gray-400">
+                    {member.major || 'No Major'}
+                  </p>
                 </div>
-            </section>
               ))}
             </div>
-          </section>
+          </div>
+
+          {/* Floating Action Button */}
           <button
-        onClick={handleSendRequest}
-        className="fixed bottom-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-600 transition"
-      >
-        Send Request
-      </button>
+            onClick={handleSendRequest}
+            className="fixed bottom-6 right-6 bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-600 transition transform hover:-translate-y-1"
+          >
+            Send Request
+          </button>
         </div>
       </main>
     </DashboardLayout>

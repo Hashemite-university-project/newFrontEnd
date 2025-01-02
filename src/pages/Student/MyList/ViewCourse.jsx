@@ -161,13 +161,6 @@ const ViewCourse = ({
                             <p className="mt-4 text-gray-700">
                                 To access all course content, please subscribe.
                             </p>
-                            <button
-                                onClick={handleEnrollmentToggle}
-                                className="mt-4 inline-block bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200"
-                                disabled={loading}
-                            >
-                                {loading ? 'Enrolling...' : 'Enroll Now'}
-                            </button>
                         </div>
                     ) : (
                         // Enrolled: Display current video with navigation
@@ -298,31 +291,7 @@ const ViewCourse = ({
 
 
 
-                    {/* Navigation Sidebar for Enrolled Users */}
-                    {isEnrolled && videos.length > 1 && (
-                        <div className="mt-6">
-                            <h4 className="text-lg font-semibold mb-2">Course Sections</h4>
-                            <ul className="space-y-2">
-                                {videos.map((video, index) => (
-                                    <li key={video.video_id}>
-                                        <button
-                                            onClick={() => handleSidebarClick(index)}
-                                            className={`w-full text-left py-2 px-4 rounded-md ${index === currentVideoIndex
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
-                                                } transition duration-200`}
-                                        >
-                                            {video.video_title}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
 
-                    {/* Locked Content Section for Not Enrolled Users */}
-                    {/* Navigation Sidebar for Enrolled Users */}
-                    {videos.length > 1 && (
                         <div className="mt-6">
                             <h4 className="text-lg font-semibold mb-2">Course Sections</h4>
                             <ul className="space-y-2">
@@ -341,7 +310,7 @@ const ViewCourse = ({
                                 ))}
                             </ul>
                         </div>
-                    )}
+
 
                     {/* Locked Content Section for Not Enrolled Users */}
                     {videos.length <= 1 && (

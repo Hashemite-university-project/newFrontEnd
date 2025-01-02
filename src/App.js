@@ -44,6 +44,7 @@ import CreateProject from './components/Instructor/Projects/CreateProject';
 import CreateTask from './pages/Instructor/projectsManagment/CreateTask';
 import EditProject from './components/Instructor/Projects/EditProject';
 import CvStudentsRequests from './pages/Instructor/projectsManagment/CvStudentsRequests';
+import ViewSubscribedCourse from './pages/Student/MyList/ViewSubscripedCourse';
 
 function App() {
   return (
@@ -123,6 +124,16 @@ function App() {
             <PrivateRoute>
 
               <SubCourseDetails />
+            </PrivateRoute>
+
+          }
+        />
+        <Route
+          path="/course/view-subscriped/:courseId"
+          element={
+            <PrivateRoute>
+
+              <ViewSubscribedCourse />
             </PrivateRoute>
 
           }

@@ -55,7 +55,7 @@ function EnrolledCourses() {
   const handleCheckout = async () => {
     setCheckoutLoading(true); // Start loading state for checkout
     try {
-      const response = await axios.post('http://localhost:8000/create-checkout-session',{}, {
+      const response = await axios.post('http://localhost:8000/create-checkout-session', {}, {
         withCredentials: true,
       });
       if (response.data && response.data.url) {
@@ -72,12 +72,12 @@ function EnrolledCourses() {
     }
   };
 
-//   if (loading) return <div>Loading...</div>;
+  //   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
     <DashboardLayout>
-            <main className="p-4 md:ml-64 h-full bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300 ">
+      <main className="p-4 md:ml-64 h-full bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300 ">
         <div className="container mx-auto px-4">
           <div className="mb-4">
             <Breadcrumb pageTitle="Enrolled Courses" />
@@ -88,17 +88,40 @@ function EnrolledCourses() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course, index) => (
-                <EnrolledCoursesCards
+                <div
                   key={index}
-                  courseID={course.course_id}
-                  courseImg={course.course_img || 'default-course-image.png'} // Provide a default image
-                  courseTitle={course.course_name}
-                  courseAuthor={course.instructor?.user?.user_name || 'Unknown Author'}
-                  courseType="Beginner"
-                  courseLesson="5 Lessons"
-                  courseDuration="3 Weeks"
-                  courseReview={course.rating || '0.0'}
-                />
+                  className="bg-white rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105"
+                >
+                  <div className="relative h-40 md:h-32 lg:h-40">
+                    <img
+                      className="w-full h-full object-cover"
+                      src={course.course_img || 'default-course-image.png'}
+                      alt={course.course_name}
+                    />
+                    <span className="absolute top-2 left-2 bg-indigo-600 text-white text-xs font-semibold py-1 px-2 rounded">
+                      Beginner
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-1 hover:text-indigo-600 transition-colors duration-300">
+                      <Link to={`/course/view-subscriped/${course.course_id}`}>{course.course_name || 'Design Course'}</Link>
+                    </h4>
+                    <p className="text-xs text-gray-500">
+                      {course.instructor?.user?.user_name || 'Unknown Author'}
+                    </p>
+                    <div className="flex items-center text-xs text-yellow-400 mt-1">
+                      <span className="font-semibold mr-1">{course.rating || '0.0'}</span>
+                      <div>
+                        {'★'.repeat(Math.round(course.rating || 0))}
+                        {'☆'.repeat(5 - Math.round(course.rating || 0))}
+                      </div>
+                    </div>
+                    <ul className="text-xs text-gray-500 mt-2">
+                      <li>5 Lessons</li>
+                      <li>3 Weeks</li>
+                    </ul>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -137,9 +160,8 @@ function EnrolledCourses() {
               <button
                 onClick={handleCheckout}
                 disabled={checkoutLoading} // Disable button while loading
-                className={`bg-blue-500 text-white font-bold py-2 px-4 rounded-full ${
-                  checkoutLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                }`}
+                className={`bg-blue-500 text-white font-bold py-2 px-4 rounded-full ${checkoutLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                  }`}
               >
                 {checkoutLoading ? 'Redirecting to checkout...' : 'Checkout'}
               </button>

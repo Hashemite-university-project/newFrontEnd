@@ -98,7 +98,7 @@ function CoursesList() {
                                 Category
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-200 uppercase tracking-wider hidden md:table-cell">
-                                Price
+                                Rating
                             </th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-200 uppercase tracking-wider">
                                 Action
@@ -130,7 +130,7 @@ function CoursesList() {
 
                                     {/* Price */}
                                     <td className="px-6 py-4 text-gray-500 hidden md:table-cell text-sm sm:text-base">
-                                        ${course.price}
+                                        {course.rating}
                                     </td>
 
                                     {/* Action */}

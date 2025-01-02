@@ -243,6 +243,10 @@ function TasksWorkSpace() {
       await fetchTasks();
       // Reset & Close
       closeCreateModal();
+      toast.success('Task Created!', {
+        position: 'top-right',
+        autoClose: 3000
+      });
     } catch (error) {
       console.error('Error creating task:', error.message);
       setSubmissionError('Failed to create task. Please try again.');
@@ -780,11 +784,11 @@ function TasksWorkSpace() {
                           <option value="">-- Select a Student --</option>
                           {students.map((student) => (
                             <option
-                              key={student.user_id}
-                              value={student.user_id}
+                              key={student.student.user.user_id}
+                              value={student.student.user.user_id}
                             >
-                              {student.user?.user_name} (
-                              {student.user?.user_email})
+                              {student.student.user?.user_name} (
+                              {student.student.user?.user_email})
                             </option>
                           ))}
                         </select>
@@ -944,9 +948,9 @@ function TasksWorkSpace() {
                     >
                       <option value="">-- Select a Student --</option>
                       {students.map((student) => (
-                        <option key={student.user_id} value={student.user_id}>
-                          {student.user?.user_name} (
-                          {student.user?.user_email})
+                        <option key={student.user_id} value={student.student.user.user_id}>
+                          {student.student.user?.user_name} (
+                          {student.student.user?.user_email})
                         </option>
                       ))}
                     </select>

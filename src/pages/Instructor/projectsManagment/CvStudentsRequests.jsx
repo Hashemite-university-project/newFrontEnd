@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../components/DashboadLayouts/DashbordLayout';
 
 function CvStudentsRequests() {
-    const { id } = useParams(); // Get student ID from route params
+    const { id, projectID } = useParams(); // Get student ID from route params
     const navigate = useNavigate();
     const [student, setStudent] = useState(null);
     const [projects, setProjects] = useState([]);
@@ -32,12 +32,12 @@ function CvStudentsRequests() {
 
     const handleDecision = async (decision) => {
         try {
-            await axios.post(
-                `http://localhost:8000/project/instructor/studentRequestDecision`,
-                { student_id: id, decision },
+            await axios.put(
+                `http://localhost:8000/project/acceptStudent/${projectID}/${id}`,
+                { student_id: id, status: decision },
                 { withCredentials: true }
             );
-            alert(`Student request ${decision === 'accept' ? 'accepted' : 'rejected'}!`);
+            alert(`Student request ${decision === 2 ? 'Accepted' : 'Rejected'}!`);
             navigate(-1); // Go back to the previous page
         } catch (error) {
             console.error('Error updating decision:', error.message);
@@ -120,13 +120,13 @@ function CvStudentsRequests() {
                     {/* Accept/Reject Buttons */}
                     <div className="px-6 py-4 bg-gray-50 text-center">
                         <button
-                            onClick={() => handleDecision('accept')}
+                            onClick={() => handleDecision(2)}
                             className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg mr-4"
                         >
                             Accept
                         </button>
                         <button
-                            onClick={() => handleDecision('reject')}
+                            onClick={() => handleDecision(3)}
                             className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg"
                         >
                             Reject

@@ -190,7 +190,7 @@ function ProjectManagement() {
                             </div>
                             {/** View CV Button */}
                             <Link
-                              to={`/instructor/project/requests/cv/${req.user_id}`}
+                              to={`/instructor/project/requests/cv/${req.user_id}/${project.id}`}
                               className="border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1 ml-2 text-sm font-medium"
                             >
                               View CV

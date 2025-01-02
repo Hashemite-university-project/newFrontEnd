@@ -354,7 +354,7 @@ function App() {
           }
         />
         <Route
-          path="/instructor/project/requests/cv/:id"
+          path="/instructor/project/requests/cv/:id/:projectID"
           element={
             <PrivateRoute>
               <CvStudentsRequests />

@@ -209,7 +209,7 @@ function Sidebar({ isDrawerOpen, closeDrawer }) {
                                     <span className="ml-3 font-bold">Admins</span>
                                 </NavLink>
                             </li>
-                            <li className='p-1'>
+                            {/* <li className='p-1'>
                                 <NavLink
                                     to="/admin/reports"
                                     className="flex items-center p-2 text-base font-medium text-gray-700 rounded-lg hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 group"
@@ -217,7 +217,7 @@ function Sidebar({ isDrawerOpen, closeDrawer }) {
                                     <FaFileAlt  className="w-6 h-6 text-gray-600 group-hover:text-gray-800 dark:text-gray-400 dark:group-hover:text-white" />
                                     <span className="ml-3 font-bold">Reports</span>
                                 </NavLink>
-                            </li>
+                            </li> */}
                         </>
                     )}
                 </ul>

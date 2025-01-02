@@ -42,6 +42,7 @@ import UpdateInstructorProfile from './components/Instructor/UpdateInstructorPro
 import UpdateAdminProfile from './components/Admin/UpdateAdminProfile';
 import CreateProject from './components/Instructor/Projects/CreateProject';
 import CreateTask from './pages/Instructor/projectsManagment/CreateTask';
+import EditProject from './components/Instructor/Projects/EditProject';
 
 function App() {
   return (
@@ -157,10 +158,9 @@ function App() {
           }
         />
         <Route
-          path="/Instructor/Courses/Edit"
+          path="/Instructor/Courses/Edit/:courseId"
           element={
             <PrivateRoute>
-
               <EditCourse />
             </PrivateRoute>
             
@@ -334,10 +334,10 @@ function App() {
           }
         />
         <Route
-          path="/instructor/addTask/:id"
+          path="/instructor/edit/project/:projectId"
           element={
             <PrivateRoute>
-              <CreateTask />
+              <EditProject />
             </PrivateRoute>
           }
         />

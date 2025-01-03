@@ -105,13 +105,17 @@ function Create() {
 
   // Handle Quill editor change for Course Description
   const handleCourseDescriptionChange = (content) => {
+    // Extract plain text from HTML content
+    const plainText = content.replace(/<(.|\n)*?>/g, '').trim();
+  
+    // Update course details with the plain text
     setCourseDetails((prevDetails) => ({
       ...prevDetails,
-      description: content,
+      description: plainText, // Store the plain text instead of HTML
     }));
-
-    // Simple validation: check if content is not empty
-    const error = content.replace(/<(.|\n)*?>/g, '').trim() === '' ? 'Course description is required' : '';
+  
+    // Simple validation: check if plain text is not empty
+    const error = plainText === '' ? 'Course description is required' : '';
     setCourseErrors((prevErrors) => ({
       ...prevErrors,
       description: error,
@@ -459,7 +463,7 @@ function Create() {
                     placeholder="Enter course description"
                     className={`w-full rounded p-3 focus:outline-none focus:ring-2 focus:ring-[#051941] dark:bg-gray-700 dark:text-white ${courseErrors.description ? 'border border-red-500' : ''}`}
                   />
-                  {courseErrors.description && <p className="text-red-500 text-sm mt-1">{courseErrors.description}</p>}
+                  {courseErrors.description}
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 dark:text-gray-300 font-medium mb-1">Category</label>

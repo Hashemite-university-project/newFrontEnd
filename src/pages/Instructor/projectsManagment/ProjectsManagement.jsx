@@ -19,22 +19,25 @@ function ProjectManagement() {
         );
         const fetchedProjects = projectResponse.data;
         setProjects(fetchedProjects);
-
+  
         // Fetch requests for all projects
         const requestsPromises = fetchedProjects.map(async (project) => {
           const response = await axios.get(
             `http://localhost:8000/project/instructor/studentRequests/${project.id}`,
             { withCredentials: true }
           );
-          return { projectId: project.id, requests: response.data };
+          return {
+            projectId: project.id,
+            requests: Array.isArray(response.data) ? response.data : [],
+          };
         });
-
+  
         const allRequests = await Promise.all(requestsPromises);
         const requestsMap = allRequests.reduce((acc, { projectId, requests }) => {
-          acc[projectId] = requests || [];
+          acc[projectId] = requests;
           return acc;
         }, {});
-
+  
         setStudentRequests(requestsMap);
       } catch (error) {
         console.error('Error fetching projects or requests:', error.message);
@@ -86,7 +89,7 @@ function ProjectManagement() {
                     }}
                   >
                     {/** Card Header */}
-                    <div className="mb-2 flex flex-col gap-y-6 border-b py-8 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mb-2 flex flex-col gap-y-6 border-b py-5 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center">
                         <img
                           className="h-14 w-14 object-cover"
@@ -130,7 +133,7 @@ function ProjectManagement() {
                     </div>
 
                     {/** Buttons Row */}
-                    <div className="flex justify-between py-8">
+                    <div className="flex justify-between py-5">
                       <button
                         onClick={() => handleFlip(project.id)}
                         className="relative text-slate-500 hover:bg-slate-100 border-2 px-4 py-2 font-medium focus:outline-none focus:ring text-sm"
@@ -145,11 +148,11 @@ function ProjectManagement() {
                         </span>
                       </button>
                       <Link
-                        className="border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white focus:outline-none focus:ring hover:bg-blue-700 text-sm"
-                        to={`/instructor/project/workSpace/${project.id}`}
-                      >
+                            className="border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white focus:outline-none focus:ring text-sm hover:text-white"
+                            to={`/instructor/project/workSpace/${project.id}`}
+                        >
                         Work Space
-                      </Link>
+                        </Link>
                     </div>
                   </div>
 

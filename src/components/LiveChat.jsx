@@ -44,8 +44,8 @@ function LiveChat({ isOpen, onClose, groupId, userID }) {
                 setMessages(messageHistory); 
             });
             newSocket.on('receiveGroupMessage', (message) => {
-                console.log(message);
-                setMessages((prevMessages) => [...prevMessages, message]); 
+                setMessages((prevMessages) => [...prevMessages, message]);
+                console.log(message); 
             });
             fetchProjects();
             fetchStudent();
@@ -66,6 +66,7 @@ function LiveChat({ isOpen, onClose, groupId, userID }) {
                 token: token, 
             };
             socket.emit('sendGroupMessage', messageData); 
+            console.log(messageData);
             setMessages((prevMessages) => [...prevMessages, messageData]);
             setNewMessage('');
         }
@@ -112,7 +113,7 @@ function LiveChat({ isOpen, onClose, groupId, userID }) {
                         <div className="flex-1 p-4 overflow-y-auto">
                             {messages.map((msg, index) => (
                                 <div key={index} className={`mb-4 ${msg.sender_id === userID ? 'text-right' : 'text-left'}`}>
-                                    <h5 className="text-sm font-semibold">{msg.sender.user_name}</h5>
+                                    <h5 className="text-sm font-semibold">{msg.sender?.user_name}</h5>
                                     <p className="text-gray-300">{msg.message}</p>
                                     <span className="text-xs text-gray-500">
                                         {new Date(msg.createdAt).toLocaleString(undefined, {

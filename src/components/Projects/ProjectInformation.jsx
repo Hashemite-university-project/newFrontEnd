@@ -95,11 +95,11 @@ const ProjectInformation = () => {
                 <h2 className="text-2xl ml-8 font-bold text-gray-800 dark:text-white mb-2">
                   Required Skills
                 </h2>
-                <ul className="list-disc ml-8 list-inside text-gray-600 dark:text-gray-400">
+                {/* <ul className="list-disc ml-8 list-inside text-gray-600 dark:text-gray-400">
                   {projectSkills.map((skill, index) => (
                     <li key={index}>{skill}</li>
                   ))}
-                </ul>
+                </ul> */}
               </div>
               <div className="relative">
                 <span className="absolute -left-6 w-8 h-8 bg-indigo-500 text-white text-center rounded-full">

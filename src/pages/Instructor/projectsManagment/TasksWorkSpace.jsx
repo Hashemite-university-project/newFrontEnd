@@ -32,6 +32,7 @@ function TasksWorkSpace() {
   const [students, setStudents] = useState([]);
   const [isFetchingStudents, setIsFetchingStudents] = useState(false);
   const [studentsError, setStudentsError] = useState('');
+  const [projectName, setProjectName] = useState('');
 
   // Modals & Task Selection
   const [selectedTask, setSelectedTask] = useState(null);
@@ -70,6 +71,11 @@ function TasksWorkSpace() {
   // Fetch Tasks from Backend
   const fetchTasks = async () => {
     try {
+        const theResponse = await axios.get(`http://localhost:8000/project/projectDetails/${projectId}`, {
+            withCredentials: true,
+          });
+          setProjectName(theResponse.data.projectDetails.project_name);
+
       const url = `http://localhost:8000/project/instructor/allTasks/${projectId}`;
       const params = {};
 
@@ -408,7 +414,7 @@ function TasksWorkSpace() {
             <div className="w-full">
               <div className="py-4">
                 <h2 className="text-2xl font-semibold leading-tight">
-                  WorkSpace
+                  {projectName} WorkSpace
                 </h2>
               </div>
 
@@ -470,7 +476,7 @@ function TasksWorkSpace() {
               <div className="w-full overflow-x-auto shadow rounded-lg">
                 <div className="-my-2 py-0 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 pr-10 lg:px-4">
                 </div>
-                <div className="align-middle inline-block min-w-full shadow overflow-hidden bg-white shadow-dashboard px-8 pt-3 rounded-bl-lg rounded-br-lg pb-4">
+                <div className="align-middle inline-block min-w-full shadow overflow-hidden bg-white shadow-dashboard pt-3 rounded-bl-lg rounded-br-lg pb-4">
                   <table className="min-w-full">
                     <thead>
                       <tr>

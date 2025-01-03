@@ -221,7 +221,7 @@ function Dashboard() {
                     {dashboardData.completedProjects.projects.map((project) => (
                       <li key={project.project_id}>
                         <a 
-                          href={`/projects/${project.project_id}`} 
+                          href={`/Instructor/Project/statistics/View/${project.project_id}`} 
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                           onClick={() => setIsCompletedProjectsOpen(false)}
                         >
@@ -268,7 +268,7 @@ function Dashboard() {
                     {dashboardData.activeCourses.courses.map((course) => (
                       <li key={course.course_id}>
                         <a 
-                          href={`/courses/${course.course_id}`} 
+                          href={`/Instructor/Courses/View/${course.course_id}`} 
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                           onClick={() => setIsActiveCoursesOpen(false)}
                         >

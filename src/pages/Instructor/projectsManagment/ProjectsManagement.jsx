@@ -12,47 +12,41 @@ function ProjectManagement() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get(
+        // Fetch projects
+        const projectResponse = await axios.get(
           'http://localhost:8000/project/instructorWorkSpace',
           { withCredentials: true }
         );
-        setProjects(response.data);
+        const fetchedProjects = projectResponse.data;
+        setProjects(fetchedProjects);
+
+        // Fetch requests for all projects
+        const requestsPromises = fetchedProjects.map(async (project) => {
+          const response = await axios.get(
+            `http://localhost:8000/project/instructor/studentRequests/${project.id}`,
+            { withCredentials: true }
+          );
+          return { projectId: project.id, requests: response.data };
+        });
+
+        const allRequests = await Promise.all(requestsPromises);
+        const requestsMap = allRequests.reduce((acc, { projectId, requests }) => {
+          acc[projectId] = requests || [];
+          return acc;
+        }, {});
+
+        setStudentRequests(requestsMap);
       } catch (error) {
-        console.error('Error fetching projects:', error.message);
+        console.error('Error fetching projects or requests:', error.message);
       }
     };
-
     fetchProjects();
   }, []);
-
-  const fetchStudentRequests = async (projectId) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8000/project/instructor/studentRequests/${projectId}`,
-        { withCredentials: true }
-      );
-      setStudentRequests((prev) => ({
-        ...prev,
-        [projectId]: response.data,
-      }));
-    } catch (error) {
-      console.error(
-        `Error fetching student requests for project ${projectId}:`,
-        error.message
-      );
-    }
-  };
-
   const handleFlip = (projectId) => {
-    const isFlippingToBack = !flippedProjects[projectId];
     setFlippedProjects((prev) => ({
       ...prev,
-      [projectId]: isFlippingToBack,
+      [projectId]: !prev[projectId],
     }));
-
-    if (isFlippingToBack && !studentRequests[projectId]) {
-      fetchStudentRequests(projectId);
-    }
   };
 
   return (
@@ -66,8 +60,6 @@ function ProjectManagement() {
           {projects.map((project) => {
             const isFlipped = !!flippedProjects[project.id];
             const requests = studentRequests[project.id] || [];
-
-            // Filter out any null or undefined requests
             const validRequests = requests.filter((req) => req && req.user);
 
             return (
@@ -141,9 +133,16 @@ function ProjectManagement() {
                     <div className="flex justify-between py-8">
                       <button
                         onClick={() => handleFlip(project.id)}
-                        className="text-slate-500 hover:bg-slate-100 border-2 px-4 py-2 font-medium focus:outline-none focus:ring text-sm"
+                        className="relative text-slate-500 hover:bg-slate-100 border-2 px-4 py-2 font-medium focus:outline-none focus:ring text-sm"
                       >
                         Requests
+                        <span
+                          className={`absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white ${
+                            validRequests.length > 0 ? 'bg-green-600' : 'bg-red-600'
+                          }`}
+                        >
+                          {validRequests.length}
+                        </span>
                       </button>
                       <Link
                         className="border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white focus:outline-none focus:ring hover:bg-blue-700 text-sm"
@@ -173,7 +172,6 @@ function ProjectManagement() {
                             key={req.user_id}
                             className="flex items-center border p-2"
                           >
-                            {/** Student Image (60×60 or your preference) */}
                             <img
                               src={
                                 req.user?.user_img ||
@@ -182,7 +180,6 @@ function ProjectManagement() {
                               alt={req.user?.user_name}
                               className="h-16 w-16 object-cover bg-gray-200 mr-4"
                             />
-                            {/** Student Info */}
                             <div className="flex-1">
                               <p className="text-slate-700 font-semibold">
                                 {req.user?.user_name || 'Unknown'}
@@ -191,7 +188,6 @@ function ProjectManagement() {
                                 {req.major || 'No Major'}
                               </p>
                             </div>
-                            {/** View CV Button */}
                             <Link
                               to={`/instructor/project/requests/cv/${req.user_id}/${project.id}`}
                               className="border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1 ml-2 text-sm font-medium"

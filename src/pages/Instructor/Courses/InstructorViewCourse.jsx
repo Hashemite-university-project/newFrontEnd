@@ -1,19 +1,17 @@
 // src/pages/Student/MyList/ViewCourse.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Chart from 'react-apexcharts';
 import DashboardLayout from '../../../components/DashboadLayouts/DashbordLayout';
 import { Breadcrumb } from 'rsuite';
+import 'rsuite/dist/rsuite.min.css';
 
-// StarRating Component for reusability
+// StarRating Component for Reusability
 const StarRating = ({ rating = 0 }) => {
-    // Ensure rating is a valid number between 0 and 5
     const validRating = Math.min(Math.max(Number(rating), 0), 5);
     const fullStars = Math.floor(validRating);
     const emptyStars = 5 - fullStars;
@@ -41,48 +39,52 @@ const StarRating = ({ rating = 0 }) => {
                 </svg>
             ))}
         </div>
-    );
-};
+    )};
 
 const InstructorViewCourse = () => {
     const { courseId } = useParams(); // Extract courseId from URL
     const [course, setCourse] = useState(null);
     const [sections, setSections] = useState([]);
-    const [allCourses, setAllCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
     const [autoPlayNext, setAutoPlayNext] = useState(false);
-    const [trendData, setTrendData] = useState(null); // State for trend data
+    const [trendData, setTrendData] = useState([]); // State for trend data
+    const [statistics, setStatistics] = useState({
+        earnings: 0,
+        numberOfStudents: 0,
+    }); // State for statistics
     const videoRef = useRef(null);
     const navigate = useNavigate(); // For navigation if needed
 
-    // Fetch course data
+    // Fetch course data and statistics
     useEffect(() => {
         const fetchCourseData = async () => {
             try {
-                const response = await axios.get(
+                // Fetch main course data
+                const courseResponse = await axios.get(
                     `http://localhost:8000/course/coursePage/${courseId}`,
                     { withCredentials: true }
                 );
-                const data = response.data;
-                setCourse(data.course || null);
-                setSections(data.content || []);
-                if (data.content && data.content.length > 0) {
+                const courseData = courseResponse.data;
+                setCourse(courseData.course || null);
+                setSections(courseData.content || []);
+                if (courseData.content && courseData.content.length > 0) {
                     setCurrentVideoIndex(0);
                 }
 
-                // Mock trend data if not provided by API
-                // Ideally, your API should provide this data
-                // Example: [{ date: '2025-01-01', count: 5 }, { date: '2025-01-02', count: 10 }, ...]
-                setTrendData([
-                    { date: '2025-01-01', count: 5 },
-                    { date: '2025-01-02', count: 8 },
-                    { date: '2025-01-03', count: 15 },
-                    { date: '2025-01-04', count: 20 },
-                    { date: '2025-01-05', count: 18 },
-                    { date: '2025-01-06', count: 25 },
-                    { date: '2025-01-07', count: 30 },
-                ]);
+                // Fetch course statistics
+                const statsResponse = await axios.get(
+                    `http://localhost:8000/course/CourseViewStatistics/${courseId}`,
+                    { withCredentials: true }
+                );
+                const statsData = statsResponse.data;
+                setStatistics({
+                    earnings: statsData.earnings || 0,
+                    numberOfStudents: statsData.numberOfStudents || 0,
+                });
+
+                // Set trend data
+                setTrendData(statsData.trendData || []);
             } catch (err) {
                 console.error('Error fetching course data:', err.message);
                 toast.error('Failed to load course data.');
@@ -94,24 +96,7 @@ const InstructorViewCourse = () => {
         fetchCourseData();
     }, [courseId]);
 
-    // Fetch all courses (if needed for related courses)
-    useEffect(() => {
-        const fetchAllCourses = async () => {
-            try {
-                const response = await axios.get(
-                    'http://localhost:8000/course/allCourses', // Adjust endpoint as needed
-                    { withCredentials: true }
-                );
-                setAllCourses(response.data || []);
-            } catch (err) {
-                console.error('Error fetching all courses:', err.message);
-            }
-        };
-
-        fetchAllCourses();
-    }, []);
-
-    // Handle video end to auto-play next video if enrolled (Not applicable for instructors)
+    // Handle video end to auto-play next video
     const handleVideoEnd = () => {
         if (currentVideoIndex < sections.length - 1) {
             setCurrentVideoIndex(currentVideoIndex + 1);
@@ -157,11 +142,11 @@ const InstructorViewCourse = () => {
         );
     }
 
-    // Prepare data for ApexCharts
+    // Prepare data for ApexCharts (Bar Chart)
     const chartOptions = {
         chart: {
             id: 'students-trend',
-            type: 'line',
+            type: 'bar', // Changed from 'line' to 'bar'
             toolbar: {
                 show: true,
             },
@@ -169,10 +154,25 @@ const InstructorViewCourse = () => {
                 enabled: true,
             },
         },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '55%',
+                endingShape: 'rounded',
+            },
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        stroke: {
+            show: true,
+            width: 2,
+            colors: ['transparent'],
+        },
         xaxis: {
-            categories: trendData ? trendData.map((data) => data.date) : [],
+            categories: trendData.map((data) => `${data.weekStart} - ${data.weekEnd}`),
             title: {
-                text: 'Date',
+                text: 'Week',
             },
         },
         yaxis: {
@@ -181,33 +181,29 @@ const InstructorViewCourse = () => {
             },
             min: 0,
         },
-        stroke: {
-            curve: 'smooth',
-            width: 2,
-        },
-        markers: {
-            size: 4,
+        fill: {
+            opacity: 1,
         },
         tooltip: {
+            y: {
+                formatter: function (val) {
+                    return val;
+                },
+            },
             theme: 'dark',
-        },
-        grid: {
-            borderColor: '#f1f1f1',
-        },
-        dataLabels: {
-            enabled: false,
         },
     };
 
     const chartSeries = [
         {
             name: 'Students Registered',
-            data: trendData ? trendData.map((data) => data.count) : [],
+            data: trendData.map((data) => data.registeredStudents),
         },
     ];
 
     return (
         <DashboardLayout>
+            {/* Toast Container for React Toastify */}
             <ToastContainer
                 position="top-right"
                 autoClose={5000}
@@ -219,6 +215,7 @@ const InstructorViewCourse = () => {
                 pauseOnFocusLoss
             />
             <main className="md:ml-64 h-full bg-gray-100 dark:bg-gray-900 transition-colors duration-300 p-6">
+                {/* Breadcrumb Navigation */}
                 <div className="mb-5">
                     <Breadcrumb>
                         <Breadcrumb.Item href="#">Home</Breadcrumb.Item>
@@ -226,10 +223,10 @@ const InstructorViewCourse = () => {
                     </Breadcrumb>
                 </div>
 
-                {/* Top Section */}
+                {/* Top Section - Course Info and Statistics */}
                 <div className="flex flex-col lg:flex-row gap-6 mb-6">
                     {/* Left Side - Course Info */}
-                    <div className="w-full lg:w-1/2 bg-white dark:bg-gray-800 shadow-md flex overflow-hidden transition-transform duration-300 transform hover:scale-105">
+                    <div className="w-full lg:w-1/2 bg-white dark:bg-gray-800      flex overflow-hidden transition-transform duration-300 transform    ">
                         <img
                             src={course.course_img || 'https://via.placeholder.com/300'}
                             alt={course.course_name || 'Course Image'}
@@ -239,18 +236,14 @@ const InstructorViewCourse = () => {
                             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                                 {course.course_name || 'Untitled Course'}
                             </h1>
-                            {/* <p
-                                className="text-gray-600 dark:text-gray-300 overflow-hidden"
-                                dangerouslySetInnerHTML={{ __html: course.course_description || 'No description available.' }}
-                            ></p> */}
                             <StarRating rating={course.rating} />
                         </div>
                     </div>
 
                     {/* Right Side - Statistics Cards */}
-                    <div className="w-full lg:w-1/2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="w-full lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Number of Students */}
-                        <div className="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center transition-transform duration-300 transform hover:scale-105">
+                        <div className="bg-white dark:bg-gray-800      p-4 flex items-center transition-transform duration-300 transform    ">
                             <div className="p-3 rounded-full bg-blue-500 text-white">
                                 {/* Icon */}
                                 <svg
@@ -270,14 +263,14 @@ const InstructorViewCourse = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                    {course.enrollments || 0}
+                                    {statistics.numberOfStudents}
                                 </p>
                                 <p className="text-gray-600 dark:text-gray-300">Number of Students</p>
                             </div>
                         </div>
 
                         {/* Earnings from the Course */}
-                        <div className="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center transition-transform duration-300 transform hover:scale-105">
+                        <div className="bg-white dark:bg-gray-800      p-4 flex items-center transition-transform duration-300 transform    ">
                             <div className="p-3 rounded-full bg-green-500 text-white">
                                 {/* Icon */}
                                 <svg
@@ -297,14 +290,14 @@ const InstructorViewCourse = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                    {course.earnings ? `$${course.earnings}` : '$0'}
+                                    ${statistics.earnings}
                                 </p>
                                 <p className="text-gray-600 dark:text-gray-300">Earnings</p>
                             </div>
                         </div>
 
                         {/* Number of Sections */}
-                        <div className="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center transition-transform duration-300 transform hover:scale-105">
+                        <div className="bg-white dark:bg-gray-800      p-4 flex items-center transition-transform duration-300 transform    ">
                             <div className="p-3 rounded-full bg-purple-500 text-white">
                                 {/* Icon */}
                                 <svg
@@ -324,7 +317,7 @@ const InstructorViewCourse = () => {
                             </div>
                             <div className="ml-4">
                                 <p className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                                    {sections.length || 0}
+                                    {sections.length}
                                 </p>
                                 <p className="text-gray-600 dark:text-gray-300">Number of Sections</p>
                             </div>
@@ -332,13 +325,18 @@ const InstructorViewCourse = () => {
                     </div>
                 </div>
 
-                {/* Line Chart */}
-                <div className="mb-6 bg-white dark:bg-gray-800 shadow-md p-6 transition-transform duration-300 transform hover:scale-105">
+                {/* Bar Chart */}
+                <div className="mb-6 bg-white dark:bg-gray-800      p-6 transition-transform duration-300 transform    ">
                     <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
                         Registered Students Trend
                     </h2>
                     {trendData && trendData.length > 0 ? (
-                        <Chart options={chartOptions} series={chartSeries} type="line" height={350} />
+                        <Chart
+                            options={chartOptions}
+                            series={chartSeries}
+                            type="bar" // Ensure the type is set to 'bar'
+                            height={350}
+                        />
                     ) : (
                         <div className="w-full h-64 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                             <p className="text-gray-500 dark:text-gray-400">No trend data available.</p>
@@ -349,7 +347,7 @@ const InstructorViewCourse = () => {
                 {/* Sections and Videos */}
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Sidebar - Sections */}
-                    <div className="w-full lg:w-1/4 bg-white dark:bg-gray-800 shadow-md p-4 transition-transform duration-300 transform hover:scale-105">
+                    <div className="w-full lg:w-1/4 bg-white dark:bg-gray-800      p-4 transition-transform duration-300 transform    ">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
                             Sections
                         </h3>
@@ -376,7 +374,7 @@ const InstructorViewCourse = () => {
                     </div>
 
                     {/* Video Display */}
-                    <div className="w-full lg:w-3/4 bg-white dark:bg-gray-800 shadow-md p-4 transition-transform duration-300 transform hover:scale-105">
+                    <div className="w-full lg:w-3/4 bg-white dark:bg-gray-800      p-4 transition-transform duration-300 transform    ">
                         {sections.length > 0 ? (
                             <>
                                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
@@ -414,7 +412,6 @@ const InstructorViewCourse = () => {
                         )}
                     </div>
                 </div>
-
             </main>
         </DashboardLayout>
     )};

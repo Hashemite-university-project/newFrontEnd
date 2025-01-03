@@ -47,7 +47,7 @@ import CvStudentsRequests from './pages/Instructor/projectsManagment/CvStudentsR
 import ViewSubscribedCourse from './pages/Student/MyList/ViewSubscripedCourse';
 import ViewCourse from './pages/Student/MyList/ViewCourse';
 import InstructorViewCourse from './pages/Instructor/Courses/InstructorViewCourse';
-
+import ViewProjectStatistics from './components/Instructor/Projects/ViewProjectStatistics';
 function App() {
   return (
     <BrowserRouter>
@@ -190,6 +190,15 @@ function App() {
           }
         />
         <Route
+          path="/Instructor/Project/statistics/View/:projectId"
+          element={
+            <PrivateRoute>
+              <ViewProjectStatistics />
+            </PrivateRoute>
+
+          }
+        />
+        <Route
           path="/admin/instructors"
           element={
             <PrivateRoute>
@@ -272,7 +281,6 @@ function App() {
           path="/profile"
           element={
             <PrivateRoute>
-
               <Profile />
             </PrivateRoute>
 
@@ -282,7 +290,6 @@ function App() {
           path="/instructor/ProjectManagement"
           element={
             <PrivateRoute>
-
               <ProjectManagement />
             </PrivateRoute>
 

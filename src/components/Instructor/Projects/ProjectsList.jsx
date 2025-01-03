@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -153,6 +153,12 @@ function ProjectsList() {
 
                   {/* Action */}
                   <td className="px-6 py-4 text-center space-x-2">
+                    <Link
+                      className="text-blue-600 dark:text-[#152c5a] hover:underline text-sm sm:text-base"
+                      to={`/Instructor/Project/statistics/View/${project.project_id}`}
+                    >
+                      View
+                    </Link>
                     <button
                       className="text-blue-600 dark:text-[#152c5a] hover:underline text-sm sm:text-base"
                       onClick={() => handleEditProject(project.project_id)}

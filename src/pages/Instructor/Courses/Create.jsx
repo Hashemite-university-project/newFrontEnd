@@ -369,23 +369,18 @@ function Create() {
       const response = await axios.post(`http://localhost:8000/course/content/${courseId}`, formData, {
         withCredentials: true,
       });
-      if (response.status === 201) {
+      if (response.data.status === 201) {
         const data = response.data; // Assuming backend returns JSON with section details
-        if (data.status === 'success') {
+
           toast.success('All sections saved successfully!', {
             position: "top-right",
             autoClose: 3000,
           });
           // Optionally, redirect to the course preview page after a short delay
           setTimeout(() => {
-            navigate(`/courses/${courseId}/preview`); // Adjust the path as per your routing
+            navigate(`/Instructor/Courses/View/${courseId}`); // Adjust the path as per your routing
           }, 3000);
-        } else {
-          toast.error(`Failed to save section: ${data.message}`, {
-            position: "top-right",
-            autoClose: 5000,
-          });
-        }
+         
       } else {
         // Note: axios does not have response.json(), use response.data instead
         const errorData = response.data;

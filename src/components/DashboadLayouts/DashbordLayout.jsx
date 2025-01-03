@@ -34,7 +34,7 @@ function DashboardLayout({ children }) {
         <Header toggleDrawer={toggleDrawer} />
 
         {/* Page Content */}
-        <main className="flex-1 py-4 px-14 mt-16 bg-gray-100 min-h-screen">
+        <main style={{ maxWidth: '100vw' }} className="flex-1  py-4 px-14 mt-16 bg-gray-100 min-h-screen">
           {children}
         </main>
       </div>

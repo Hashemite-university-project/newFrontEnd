@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import DashboardLayout from '../DashboadLayouts/DashbordLayout';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 function UpdateAdminProfile() {
     const { id } = useParams();
@@ -76,7 +77,6 @@ function UpdateAdminProfile() {
         }
         fetchUserData();
     }, [id]);
-
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
@@ -87,9 +87,15 @@ function UpdateAdminProfile() {
                     withCredentials: true,
                 }
             );
-            alert('Profile updated successfully!');
+            toast.success('Profile updated successfully!', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update user data');
+            toast.error(err.response?.data?.message || 'Failed to update user data', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         }
     };
 

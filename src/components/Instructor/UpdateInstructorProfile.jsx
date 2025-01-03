@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import DashboardLayout from '../DashboadLayouts/DashbordLayout';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 function UpdateStudentProfile() {
     const { id } = useParams();
@@ -88,8 +89,15 @@ function UpdateStudentProfile() {
             }));
             setNewLinkName('');
             setNewLinkURL('');
+            toast.success('Link added successfully!', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         } else {
-            alert("Please fill out both fields.");
+            toast.error('Please fill out both fields.', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         }
     };
     
@@ -131,11 +139,20 @@ function UpdateStudentProfile() {
             const response = await axios.put(
                 'http://localhost:8000/user/student/info',
                 formData,
-                { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } }
+                {
+                    withCredentials: true,
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                }
             );
-            alert('Profile updated successfully!');
+            toast.success('Profile updated successfully!', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update user data');
+            toast.error(err.response?.data?.message || 'Failed to update user data', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
         }
     };
 

@@ -1,3 +1,5 @@
+// src/pages/Student/MyList/TasksWorkSpace.jsx
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -21,7 +23,7 @@ function TasksWorkSpace() {
   const [tasks, setTasks] = useState([]);
   const { id: projectId } = useParams();
   const [taskName, setTaskName] = useState('');
-  const [active, setStatusFilter] = useState('in_progress');
+  const [statusFilter, setStatusFilter] = useState('All'); // Aligned with backend status names
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -65,15 +67,28 @@ function TasksWorkSpace() {
   // Fetch Tasks from Backend
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:8000/project/instructor/allTasks/${projectId}/${active}?task_name=${encodeURIComponent(
-          taskName
-        )}`,
-        { withCredentials: true }
-      );
+      const url = `http://localhost:8000/project/instructor/allTasks/${projectId}`;
+      const params = {};
+
+      // Add task_name to query parameters if provided
+      if (taskName) {
+        params.task_name = taskName;
+      }
+
+      // Include 'status' in query parameters only if it's not 'All'
+      if (statusFilter !== 'All') {
+        params.status = statusFilter;
+      }
+
+      const response = await axios.get(url, {
+        params: params,
+        withCredentials: true,
+      });
+
       setTasks(response.data.tasks);
     } catch (error) {
       console.error('Error fetching tasks:', error.message);
+      toast.error('Failed to load tasks. Please try again.');
     }
   };
 
@@ -100,7 +115,9 @@ function TasksWorkSpace() {
     if (projectId) {
       fetchTasks();
     }
-  }, [projectId, active, taskName]);
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  }, [projectId, statusFilter, taskName]);
 
   // Fetch students when create modal OR edit mode is opened
   useEffect(() => {
@@ -138,7 +155,7 @@ function TasksWorkSpace() {
         : '',
       file: null,
       assignedStudentId:
-        selectedTask.assignedUser?.user_id || ''
+        selectedTask.assignedUser?.user?.user_id || ''
     });
 
     setIsEditing(true);
@@ -174,16 +191,13 @@ function TasksWorkSpace() {
     setSubmissionError('');
   };
 
-  /* ==================== Filtering & Pagination ==================== */
+  /* ==================== Pagination ==================== */
 
-  const filteredTasks = tasks.filter((task) =>
-    active === 'All' ? true : task.status === active.toLowerCase()
-  );
-  const paginatedTasks = filteredTasks.slice(
+  const paginatedTasks = tasks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const totalPages = Math.ceil(tasks.length / itemsPerPage);
 
   /* ==================== Handlers for Form Input ==================== */
 
@@ -293,8 +307,8 @@ function TasksWorkSpace() {
         }
       );
 
-      // If the API returns a success message like {"message": "Task updated!"}
-      if (response.data.status == 200) {
+      // If the API returns a success message like {"status": 200, "message": "Task updated!"}
+      if (response.data.status === 200) {
         toast.success('Task updated!', {
           position: 'top-right',
           autoClose: 3000
@@ -327,9 +341,54 @@ function TasksWorkSpace() {
       });
       // Re-fetch tasks
       await fetchTasks();
+      toast.success('Task Deleted!', {
+        position: 'top-right',
+        autoClose: 3000
+      });
     } catch (error) {
       console.error('Error deleting task:', error.message);
-      alert('Failed to delete task. Please try again.');
+      toast.error('Failed to delete task. Please try again.');
+    }
+  };
+
+  /* ==================== Accept or Reject Task ==================== */
+
+  const handleTaskStatusUpdate = async (taskId, newStatus) => {
+    setIsSubmitting(true);
+    setSubmissionError('');
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/task/instructor/returnTask/${taskId}`,
+        { status: newStatus },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true
+        }
+      );
+
+      if (response.data.message === 'Task returned!') {
+        toast.success(
+          `Task ${newStatus === 'completed' ? 'accepted' : 'rejected'} successfully!`,
+          {
+            position: 'top-right',
+            autoClose: 3000
+          }
+        );
+        // Re-fetch tasks to update the status
+        await fetchTasks();
+        // Optionally, close the modal
+        closeDetailsModal();
+      } else {
+        toast.error(response.data.message || 'Failed to update task status.');
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error.message);
+      toast.error('Failed to update task status. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -378,13 +437,14 @@ function TasksWorkSpace() {
                   </label>
                   <select
                     id="statusFilter"
-                    value={active}
+                    value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                     className="block appearance-none bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm leading-tight focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                   >
-                    <option>All</option>
-                    <option>Active</option>
-                    <option>Ended</option>
+                    <option value="All">All</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending_approval">Pending Approval</option>
                   </select>
                 </div>
 
@@ -392,7 +452,7 @@ function TasksWorkSpace() {
                 <div>
                   <button
                     onClick={openCreateModal}
-                    className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm shadow-lg"
                   >
                     Add Task
                   </button>
@@ -475,6 +535,8 @@ function TasksWorkSpace() {
                               className={`relative inline-block px-3 py-1 font-semibold leading-tight ${
                                 task.status === 'completed'
                                   ? 'text-green-900'
+                                  : task.status === 'pending_approval'
+                                  ? 'text-yellow-900'
                                   : 'text-orange-900'
                               }`}
                             >
@@ -483,6 +545,8 @@ function TasksWorkSpace() {
                                 className={`absolute inset-0 ${
                                   task.status === 'completed'
                                     ? 'bg-green-200'
+                                    : task.status === 'pending_approval'
+                                    ? 'bg-yellow-200'
                                     : 'bg-orange-200'
                                 } opacity-50 rounded-full`}
                               ></span>
@@ -535,8 +599,7 @@ function TasksWorkSpace() {
                 <div className="px-5 py-5 bg-white border-t flex flex-col sm:flex-row items-center sm:justify-between gap-2">
                   <span className="text-xs sm:text-sm text-gray-900">
                     Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                    {Math.min(currentPage * itemsPerPage, filteredTasks.length)}{' '}
-                    of {filteredTasks.length} Entries
+                    {Math.min(currentPage * itemsPerPage, tasks.length)} of {tasks.length} Entries
                   </span>
                   <div className="inline-flex sm:mt-0">
                     <button
@@ -572,439 +635,471 @@ function TasksWorkSpace() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Task Details Modal */}
-        {isDetailsModalOpen && selectedTask && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-8 overflow-auto"
-            aria-labelledby="modal-title"
-            role="dialog"
-            aria-modal="true"
-          >
+          {/* Task Details Modal */}
+          {isDetailsModalOpen && selectedTask && (
             <div
-              className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg w-full mx-auto"
-              role="document"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-8 overflow-auto"
+              aria-labelledby="modal-title"
+              role="dialog"
+              aria-modal="true"
             >
-              {/* Modal Header */}
-              <div className="bg-blue-600 px-4 py-3 sm:px-6 flex justify-between items-center">
-                <h3
-                  className="text-lg leading-6 font-medium text-white"
-                  id="modal-title"
-                >
-                  {isEditing ? 'Edit Task' : 'Task Details'}
-                </h3>
-                <button
-                  onClick={closeDetailsModal}
-                  className="text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white rounded"
-                  aria-label="Close modal"
-                >
-                  <XIcon className="h-6 w-6" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="px-4 py-5 sm:p-6">
-                {/** If not editing, show read-only details; if editing, show a form **/}
-                {!isEditing ? (
-                  <div className="space-y-4">
-                    {/* Title */}
-                    <div className="flex items-center">
-                      <span className="font-semibold w-32">Title:</span>
-                      <p className="text-gray-700">
-                        {selectedTask.title || 'Untitled Task'}
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <div className="flex items-start">
-                      <span className="font-semibold w-32">Description:</span>
-                      <p className="text-gray-700">
-                        {selectedTask.description || 'No Description'}
-                      </p>
-                    </div>
-
-                    {/* Assigned User */}
-                    <div className="flex items-center">
-                      <span className="font-semibold w-32">Assigned User:</span>
-                      <p className="text-gray-700">
-                        {selectedTask.assignedUser?.user?.user_name || 'N/A'}
-                      </p>
-                    </div>
-
-                    {/* Status */}
-                    <div className="flex items-center">
-                      <span className="font-semibold w-32">Status:</span>
-                      <span
-                        className={`relative inline-block px-3 py-1 font-semibold leading-tight ${
-                          selectedTask.status === 'completed'
-                            ? 'text-green-900'
-                            : 'text-orange-900'
-                        }`}
-                      >
-                        <span
-                          aria-hidden
-                          className={`absolute inset-0 ${
-                            selectedTask.status === 'completed'
-                              ? 'bg-green-200'
-                              : 'bg-orange-200'
-                          } opacity-50 rounded-full`}
-                        ></span>
-                        <span className="relative capitalize">
-                          {selectedTask.status.replace('_', ' ')}
-                        </span>
-                      </span>
-                    </div>
-
-                    {/* Due Date */}
-                    <div className="flex items-center">
-                      <span className="font-semibold w-32">Due Date:</span>
-                      <p className="text-gray-700">
-                        {formatDate(selectedTask.due_date) || 'N/A'}
-                      </p>
-                    </div>
-
-                    {/* Task Image/File */}
-                    {selectedTask.task_img && (
-                      <div className="flex items-center">
-                        <span className="font-semibold w-32">File:</span>
-                        <a
-                          href={selectedTask.task_img}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 underline hover:text-blue-700 flex items-center"
-                        >
-                          Download
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Edit Form */
-                  <form
-                    onSubmit={handleUpdateTaskRequest}
-                    encType="multipart/form-data"
-                    className="space-y-4"
+              <div
+                className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg w-full mx-auto"
+                role="document"
+              >
+                {/* Modal Header */}
+                <div className="bg-blue-600 px-4 py-3 sm:px-6 flex justify-between items-center">
+                  <h3
+                    className="text-lg leading-6 font-medium text-white"
+                    id="modal-title"
                   >
-                    {/* Title */}
-                    <div>
-                      <label
-                        htmlFor="title"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Title<span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        value={newTask.title}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
+                    {isEditing ? 'Edit Task' : 'Task Details'}
+                  </h3>
+                  <button
+                    onClick={closeDetailsModal}
+                    className="text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white rounded"
+                    aria-label="Close modal"
+                  >
+                    <XIcon className="h-6 w-6" />
+                  </button>
+                </div>
 
-                    {/* Description */}
-                    <div>
-                      <label
-                        htmlFor="description"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Description<span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        value={newTask.description}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        rows="3"
-                        required
-                      ></textarea>
-                    </div>
+                {/* Modal Body */}
+                <div className="px-4 py-5 sm:p-6">
+                  {/** If not editing, show read-only details; if editing, show a form **/}
+                  {!isEditing ? (
+                    <div className="space-y-4">
+                      {/* Title */}
+                      <div className="flex items-center">
+                        <span className="font-semibold w-32">Title:</span>
+                        <p className="text-gray-700">
+                          {selectedTask.title || 'Untitled Task'}
+                        </p>
+                      </div>
 
-                    {/* Due Date */}
-                    <div>
-                      <label
-                        htmlFor="due_date"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Due Date<span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        id="due_date"
-                        name="due_date"
-                        value={newTask.due_date}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
+                      {/* Description */}
+                      <div className="flex items-start">
+                        <span className="font-semibold w-32">Description:</span>
+                        <p className="text-gray-700">
+                          {selectedTask.description || 'No Description'}
+                        </p>
+                      </div>
 
-                    {/* File Upload */}
-                    <div>
-                      <label
-                        htmlFor="file"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        File
-                      </label>
-                      <input
-                        type="file"
-                        id="file"
-                        name="file"
-                        onChange={handleFileChange}
-                        className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                      />
-                    </div>
+                      {/* Assigned User */}
+                      <div className="flex items-center">
+                        <span className="font-semibold w-32">Assigned User:</span>
+                        <p className="text-gray-700">
+                          {selectedTask.assignedUser?.user?.user_name || 'N/A'}
+                        </p>
+                      </div>
 
-                    {/* Assign to Student */}
-                    <div>
-                      <label
-                        htmlFor="assignedStudentId"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Assign to<span className="text-red-500">*</span>
-                      </label>
-                      {isFetchingStudents ? (
-                        <p className="text-gray-500">Loading students...</p>
-                      ) : studentsError ? (
-                        <p className="text-red-500">{studentsError}</p>
-                      ) : (
-                        <select
-                          id="assignedStudentId"
-                          name="assignedStudentId"
-                          value={newTask.assignedStudentId}
+                      {/* Status */}
+                      <div className="flex items-center">
+                        <span className="font-semibold w-32">Status:</span>
+                        <span
+                          className={`relative inline-block px-3 py-1 font-semibold leading-tight ${
+                            selectedTask.status === 'completed'
+                              ? 'text-green-900'
+                              : selectedTask.status === 'pending_approval'
+                              ? 'text-yellow-900'
+                              : 'text-orange-900'
+                          }`}
+                        >
+                          <span
+                            aria-hidden
+                            className={`absolute inset-0 ${
+                              selectedTask.status === 'completed'
+                                ? 'bg-green-200'
+                                : selectedTask.status === 'pending_approval'
+                                ? 'bg-yellow-200'
+                                : 'bg-orange-200'
+                            } opacity-50 rounded-full`}
+                          ></span>
+                          <span className="relative capitalize">
+                            {selectedTask.status.replace('_', ' ')}
+                          </span>
+                        </span>
+                      </div>
+
+                      {/* Due Date */}
+                      <div className="flex items-center">
+                        <span className="font-semibold w-32">Due Date:</span>
+                        <p className="text-gray-700">
+                          {formatDate(selectedTask.due_date) || 'N/A'}
+                        </p>
+                      </div>
+
+                      {/* Task Image/File */}
+                      {selectedTask.task_img && (
+                        <div className="flex items-center">
+                          <span className="font-semibold w-32">File:</span>
+                          <a
+                            href={selectedTask.task_img}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 underline hover:text-blue-700 flex items-center"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Edit Form */
+                    <form
+                      onSubmit={handleUpdateTaskRequest}
+                      encType="multipart/form-data"
+                      className="space-y-4"
+                    >
+                      {/* Title */}
+                      <div>
+                        <label
+                          htmlFor="title"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Title<span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="title"
+                          name="title"
+                          value={newTask.title}
                           onChange={handleInputChange}
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                           required
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div>
+                        <label
+                          htmlFor="description"
+                          className="block text-sm font-medium text-gray-700"
                         >
-                          <option value="">-- Select a Student --</option>
-                          {students.map((student) => (
-                            <option
-                              key={student.student.user.user_id}
-                              value={student.student.user.user_id}
-                            >
-                              {student.student.user?.user_name} (
-                              {student.student.user?.user_email})
-                            </option>
-                          ))}
-                        </select>
+                          Description<span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          id="description"
+                          name="description"
+                          value={newTask.description}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          rows="3"
+                          required
+                        ></textarea>
+                      </div>
+
+                      {/* Due Date */}
+                      <div>
+                        <label
+                          htmlFor="due_date"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Due Date<span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="date"
+                          id="due_date"
+                          name="due_date"
+                          value={newTask.due_date}
+                          onChange={handleInputChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+
+                      {/* File Upload */}
+                      <div>
+                        <label
+                          htmlFor="file"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          File
+                        </label>
+                        <input
+                          type="file"
+                          id="file"
+                          name="file"
+                          onChange={handleFileChange}
+                          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+
+                      {/* Assign to Student */}
+                      <div>
+                        <label
+                          htmlFor="assignedStudentId"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Assign to<span className="text-red-500">*</span>
+                        </label>
+                        {isFetchingStudents ? (
+                          <p className="text-gray-500">Loading students...</p>
+                        ) : studentsError ? (
+                          <p className="text-red-500">{studentsError}</p>
+                        ) : (
+                          <select
+                            id="assignedStudentId"
+                            name="assignedStudentId"
+                            value={newTask.assignedStudentId}
+                            onChange={handleInputChange}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            required
+                          >
+                            <option value="">-- Select a Student --</option>
+                            {students.map((student) => (
+                              <option
+                                key={student.user_id}
+                                value={student.student.user.user_id}
+                              >
+                                {student.student.user?.user_name} (
+                                {student.student.user?.user_email})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+
+                      {/* Submission Error */}
+                      {submissionError && (
+                        <p className="text-red-500">{submissionError}</p>
                       )}
-                    </div>
 
-                    {/* Submission Error */}
-                    {submissionError && (
-                      <p className="text-red-500">{submissionError}</p>
-                    )}
-
-                    {/* Buttons: Update / Cancel */}
-                    <div className="flex justify-end gap-3 mt-4">
-                      <button
-                        type="button"
-                        onClick={handleCancelEdit}
-                        className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={`bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 ${
-                          isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {isSubmitting ? 'Updating...' : 'Update'}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-
-              {/* Modal Footer (View Mode Only) */}
-              {!isEditing && (
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:justify-end gap-2">
-                  <button
-                    onClick={handleEnterEditMode}
-                    className="inline-flex items-center justify-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
-                  >
-                    <PencilAltIcon className="h-5 w-5 mr-2" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={closeDetailsModal}
-                    className="inline-flex items-center justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
-                  >
-                    Close
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Create Task Modal */}
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-8 overflow-auto">
-            <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-lg mx-auto">
-              <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
-              <form onSubmit={handleCreateTask} encType="multipart/form-data">
-                {/* Title */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Title<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={newTask.title}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Description<span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={newTask.description}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    rows="4"
-                    required
-                  ></textarea>
-                </div>
-
-                {/* Due Date */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="due_date"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Due Date<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="due_date"
-                    name="due_date"
-                    value={newTask.due_date}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-
-                {/* File Upload */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="file"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    File
-                  </label>
-                  <input
-                    type="file"
-                    id="file"
-                    name="file"
-                    onChange={handleFileChange}
-                    className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                </div>
-
-                {/* Assign to Student */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="assignedStudentId"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Assign to<span className="text-red-500">*</span>
-                  </label>
-                  {isFetchingStudents ? (
-                    <p className="text-gray-500">Loading students...</p>
-                  ) : studentsError ? (
-                    <p className="text-red-500">{studentsError}</p>
-                  ) : (
-                    <select
-                      id="assignedStudentId"
-                      name="assignedStudentId"
-                      value={newTask.assignedStudentId}
-                      onChange={handleInputChange}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">-- Select a Student --</option>
-                      {students.map((student) => (
-                        <option key={student.user_id} value={student.student.user.user_id}>
-                          {student.student.user?.user_name} (
-                          {student.student.user?.user_email})
-                        </option>
-                      ))}
-                    </select>
+                      {/* Buttons: Update / Cancel */}
+                      <div className="flex justify-end gap-3 mt-4">
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 ${
+                            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {isSubmitting ? 'Updating...' : 'Update'}
+                        </button>
+                      </div>
+                    </form>
                   )}
                 </div>
 
-                {/* Submission Error */}
-                {submissionError && (
-                  <p className="text-red-500 mb-4">{submissionError}</p>
+                {/* Modal Footer (View Mode Only) */}
+                {!isEditing && (
+                  <div className="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col sm:flex-row sm:justify-end gap-2">
+                    {/* Conditionally render Accept and Reject buttons if status is pending_approval */}
+                    {selectedTask.status === 'pending_approval' && (
+                      <div className="flex space-x-2 mb-2 sm:mb-0">
+                        <button
+                          onClick={() =>
+                            handleTaskStatusUpdate(selectedTask.task_id, 'completed')
+                          }
+                          className={`bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? 'Processing...' : 'Accept'}
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleTaskStatusUpdate(selectedTask.task_id, 'in_progress')
+                          }
+                          className={`bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? 'Processing...' : 'Reject'}
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      onClick={handleEnterEditMode}
+                      className="inline-flex items-center justify-center px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
+                    >
+                      <PencilAltIcon className="h-5 w-5 mr-2" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={closeDetailsModal}
+                      className="inline-flex items-center justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
                 )}
-
-                {/* Form Buttons */}
-                <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    type="button"
-                    onClick={closeCreateModal}
-                    className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={`bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isSubmitting ? 'Creating...' : 'Create Task'}
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Live Chat */}
-        <div className="relative">
-          <button
-            onClick={() => setIsChatOpen(true)}
-            className="fixed bottom-4 right-4 rounded-lg border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white focus:outline-none focus:ring hover:bg-blue-700 text-sm shadow-lg"
-          >
-            Open Chat
-          </button>
-          {isChatOpen && (
-            <LiveChat
-              isOpen={isChatOpen}
-              onClose={() => setIsChatOpen(false)}
-              groupId={projectId}
-            />
           )}
-        </div>
-      </main>
-    </DashboardLayout>
-  );
+
+          {/* Create Task Modal */}
+          {isCreateModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-8 overflow-auto">
+              <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-lg mx-auto">
+                <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+                <form onSubmit={handleCreateTask} encType="multipart/form-data">
+                  {/* Title */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Title<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={newTask.title}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Description<span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={newTask.description}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      rows="4"
+                      required
+                    ></textarea>
+                  </div>
+
+                  {/* Due Date */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="due_date"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Due Date<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      id="due_date"
+                      name="due_date"
+                      value={newTask.due_date}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  {/* File Upload */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="file"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      File
+                    </label>
+                    <input
+                      type="file"
+                      id="file"
+                      name="file"
+                      onChange={handleFileChange}
+                      className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:rounded-md file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+
+                  {/* Assign to Student */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="assignedStudentId"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Assign to<span className="text-red-500">*</span>
+                    </label>
+                    {isFetchingStudents ? (
+                      <p className="text-gray-500">Loading students...</p>
+                    ) : studentsError ? (
+                      <p className="text-red-500">{studentsError}</p>
+                    ) : (
+                      <select
+                        id="assignedStudentId"
+                        name="assignedStudentId"
+                        value={newTask.assignedStudentId}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        <option value="">-- Select a Student --</option>
+                        {students.map((student) => (
+                          <option key={student.user_id} value={student.student.user.user_id}>
+                            {student.student.user?.user_name} (
+                            {student.student.user?.user_email})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Submission Error */}
+                  {submissionError && (
+                    <p className="text-red-500 mb-4">{submissionError}</p>
+                  )}
+
+                  {/* Form Buttons */}
+                  <div className="flex justify-end gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={closeCreateModal}
+                      className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 ${
+                        isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      {isSubmitting ? 'Creating...' : 'Create Task'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Live Chat */}
+          <div className="relative">
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="fixed bottom-4 right-4 rounded-lg border-2 border-transparent bg-blue-600 px-4 py-2 font-medium text-white focus:outline-none focus:ring hover:bg-blue-700 text-sm shadow-lg"
+            >
+              Open Chat
+            </button>
+            {isChatOpen && (
+              <LiveChat
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                groupId={projectId}
+              />
+            )}
+          </div>
+          </div>
+        </main>
+      </DashboardLayout>
+    );
+
 }
 
 export default TasksWorkSpace;

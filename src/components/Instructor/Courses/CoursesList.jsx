@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, CheckIcon, XIcon } from '@heroicons/react/solid';
+import { EyeIcon } from 'lucide-react';
 
 function CoursesList() {
     const [courses, setCourses] = useState([]);
@@ -135,6 +136,10 @@ function CoursesList() {
 
                                     {/* Action */}
                                     <td className="px-6 py-4 text-center space-x-4">
+                                        <NavLink to={`/Instructor/Courses/View/${course.course_id}`} className="text-blue-600 hover:text-blue-700 text-sm sm:text-base font-medium transition duration-200">
+                                            <EyeIcon className="h-5 w-5 inline-block mr-1" />
+                                            View
+                                        </NavLink>
                                         <NavLink to={`/Instructor/Courses/Edit/${course.course_id}`} className="text-blue-600 hover:text-blue-700 text-sm sm:text-base font-medium transition duration-200">
                                             <PencilIcon className="h-5 w-5 inline-block mr-1" />
                                             Edit

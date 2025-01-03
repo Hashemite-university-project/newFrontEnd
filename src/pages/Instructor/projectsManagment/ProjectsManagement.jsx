@@ -67,6 +67,9 @@ function ProjectManagement() {
             const isFlipped = !!flippedProjects[project.id];
             const requests = studentRequests[project.id] || [];
 
+            // Filter out any null or undefined requests
+            const validRequests = requests.filter((req) => req && req.user);
+
             return (
               <div
                 key={project.id}
@@ -95,7 +98,7 @@ function ProjectManagement() {
                       <div className="flex items-center">
                         <img
                           className="h-14 w-14 object-cover"
-                          src={project.image || 'default_image_url'}
+                          src={project.image || 'https://via.placeholder.com/56'}
                           alt={project.name}
                         />
                         <div className="ml-4 w-56">
@@ -164,8 +167,8 @@ function ProjectManagement() {
                       Student Requests
                     </h2>
                     <div className="overflow-y-auto max-h-64 space-y-3 pr-2">
-                      {requests.length > 0 ? (
-                        requests.map((req) => (
+                      {validRequests.length > 0 ? (
+                        validRequests.map((req) => (
                           <div
                             key={req.user_id}
                             className="flex items-center border p-2"
@@ -221,4 +224,5 @@ function ProjectManagement() {
     </DashboardLayout>
   );
 }
+
 export default ProjectManagement;

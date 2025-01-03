@@ -40,7 +40,7 @@ function Courses() {
         },
         withCredentials: true,
       });
-      setCourses(response.data.courses);
+      setCourses(response.data);
       setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error('Error fetching projects:', error);
